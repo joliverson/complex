@@ -1,0 +1,23 @@
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t joliverson/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run  -e CI=true joliverson/react-test npm test
+
+after_success:
+    - docker build -t joliverson/multi-client ./client
+    - docker build -t joliverson/multi-nginx ./nginx
+    - docker build -t joliverson/multi-server ./server
+    - docker build -t joliverson/multi-worker ./worker
+    # Log into the docker CLI
+    -echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    # Take those images and push them to docker hub
+    - docker push joliverson/multi-client
+    - docker push joliverson/multi-nginx
+    - docker push joliverson/multi-server
+    - docker push joliverson/multi-worker
+
